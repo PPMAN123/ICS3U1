@@ -2,6 +2,7 @@
   "files.associations": {
     "*.rmd": "markdown",
     "iostream": "cpp",
+<<<<<<< Updated upstream
     "ostream": "cpp",
 <<<<<<< Updated upstream
     "*.tcc": "cpp",
@@ -21,4 +22,8 @@
   "C_Cpp.errorSquiggles": "disabled"
 >>>>>>> Stashed changes
 >>>>>>> main
+=======
+    "ostream": "cpp"
+  }
+>>>>>>> Stashed changes
 }
