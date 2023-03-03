@@ -1,7 +1,7 @@
 #include <iostream>
 #include <iomanip>
-#include <string>
 #include <stdlib.h>
+#include <string>
 using namespace std;
 
 int main(){
@@ -107,7 +107,7 @@ int main(){
   cout << "> Average gas price ($/L): ";
   cin >> avgGasPrice;
 
-  float totalGasBill = distanceTravelled * fuelEfficiency * avgGasPrice;
+  float totalGasBill = distanceTravelled / fuelEfficiency * avgGasPrice;
 
   //Mortgage
   float biWeeklyPayment;
@@ -115,5 +115,21 @@ int main(){
   cout << "> Amount of Bi-Weekly Mortgage Payment: $";
   cin >> biWeeklyPayment;
 
-  float totalMortgage = biWeeklyPayment*21;
+  float totalMortgage = biWeeklyPayment*26;
+
+  float remainingMoney = parentOneSalary + parentTwoTotalIncome + childTotalIncome - totalTax - moneyInvested - totalElectricityCost - totalPhoneBill - totalGasBill - totalMortgage;
+
+  float groceriesMoney = remainingMoney * 0.6;
+  float entertainmentMoney = remainingMoney * 0.25;
+  float cashSavings = remainingMoney * 0.15;
+
+
+  //Outputs
+  cout << "\n\n-------------------------INCOME---------------------------------------\n" << endl;
+
+  string prompt = "Income of " + parentOneName + " :";
+  int numberWidthInteger = parentOneSalary;
+  string numberWidthString = to_string(numberWidthInteger);
+  cout << prompt << setw(70-prompt.length() - numberWidthString.length() - 3) << right << fixed << '$' << setprecision(2)  << parentOneSalary << endl;
+  
 }
