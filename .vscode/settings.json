@@ -3,9 +3,22 @@
     "*.rmd": "markdown",
     "iostream": "cpp",
     "ostream": "cpp",
+<<<<<<< Updated upstream
     "*.tcc": "cpp",
+<<<<<<< HEAD
     "limits": "cpp",
     "string_view": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled"
+=======
+    "limits": "cpp"
+  }
+=======
+    "string": "cpp",
+    "bitset": "cpp",
+    "ios": "cpp"
+  },
+  "C_Cpp.errorSquiggles": "disabled"
+>>>>>>> Stashed changes
+>>>>>>> main
 }
