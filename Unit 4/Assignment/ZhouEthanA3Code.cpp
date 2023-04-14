@@ -168,78 +168,75 @@ int main(){
   for (int i = 0; i < 7; i++){
     cout << "\t" << i + 1 << ") " << shapes[i] << endl;
   }
-  // cout << "\t1) Horizontal Line" << endl;
-  // cout << "\t2) Vertical Line" << endl;
-  // cout << "\t3) Isosceles Triangle" << endl;
-  // cout << "\t4) House" << endl;
-  // cout << "\t5) Arch" << endl;
-  // cout << "\t6) Hourglass" << endl;
-  // cout << "\t7) Ring" << endl;
   cout << endl;
 
   do{
+    //First do loop to repeat if user wants to generate more shapes
     do{
-      do{
-        cout << "Enter your choice (1-7): ";
+      //Do loop that error traps invalid choice inputs
+      cout << "Enter your choice (1-7): ";
+      cin >> selection;
+      if (selection < 0 || selection > 7){
+        //Prints error message when selection is invalid
+        cout << "\nInvalid input! Enter a number between 1 to 7 please: ";
         cin >> selection;
-        if (selection < 0 || selection > 7){
-          cout << "\nInvalid input! Enter a number between 1 to 7 please: ";
-          cin >> selection;
-        }
-      } while (selection < 0 || selection > 7);
-      switch(selection){
-        case 1:
-          horizontalLine(
-            numberPrompt("Enter the horizontal line's length: ", 1, 20),
-            symbolPrompt("Enter your preferred symbol: ")
-          );
-          timesGenerated[selection - 1] += 1;
-          break;
-        case 2:
-          verticalLine(
-            numberPrompt("Enter the vertical line's height: ", 1, 20),
-            symbolPrompt("Enter your preferred symbol: ")
-          );
-          timesGenerated[selection - 1] += 1;
-          break;
-        case 3:
-          isoscelesTriangle(
-            numberPrompt("Enter the height of the triangle: ", 1, 20),
-            symbolPrompt("Enter your preferred symbol: ")
-          );
-          timesGenerated[selection - 1] += 1;
-          break;
-        case 4:
-          house(
-            numberPrompt("Enter the height of the house without the roof: ", 1, 20),
-            numberPrompt("Enter the width of the house: ", 3, 20),
-            symbolPrompt("Enter the preferred symbol: ")
-          );
-          timesGenerated[selection - 1] += 1;
-          break;
-        case 5:
-          arch(
-            numberPrompt("Enter the height of the arch: ", 3, 20),
-            symbolPrompt("Enter the preferred symbol: ")
-          );
-          timesGenerated[selection - 1] += 1;
-          break;
-        case 6:
-          hourGlass(
-            numberPrompt("Enter the height of the hourglass: ", 3, 20),
-            symbolPrompt("Enter the preferred symbol: ")
-          );
-          timesGenerated[selection - 1] += 1;
-          break;
-        case 7:
-          ring(
-            numberPrompt("Enter the radius of the ring: ", 3, 20),
-            symbolPrompt("Enter the preferred symbol: ")
-          );
-          timesGenerated[selection - 1] += 1;
-          break;
       }
     } while (selection < 0 || selection > 7);
+    switch(selection){
+      //Switch statement that handles selections
+      case 1:
+        //Using functions to save some variable declarations
+        horizontalLine(
+          numberPrompt("Enter the horizontal line's length: ", 1, 20),
+          symbolPrompt("Enter your preferred symbol: ")
+        );
+        //This line of code adds 1 to the array that keeps track of how many times each shape is generated to the according choice
+        timesGenerated[selection - 1] += 1;
+        break;
+      case 2:
+        verticalLine(
+          numberPrompt("Enter the vertical line's height: ", 1, 20),
+          symbolPrompt("Enter your preferred symbol: ")
+        );
+        timesGenerated[selection - 1] += 1;
+        break;
+      case 3:
+        isoscelesTriangle(
+          numberPrompt("Enter the height of the triangle: ", 1, 20),
+          symbolPrompt("Enter your preferred symbol: ")
+        );
+        timesGenerated[selection - 1] += 1;
+        break;
+      case 4:
+        house(
+          numberPrompt("Enter the height of the house without the roof: ", 1, 20),
+          numberPrompt("Enter the width of the house: ", 3, 20),
+          symbolPrompt("Enter the preferred symbol: ")
+        );
+        timesGenerated[selection - 1] += 1;
+        break;
+      case 5:
+        arch(
+          numberPrompt("Enter the height of the arch: ", 3, 20),
+          symbolPrompt("Enter the preferred symbol: ")
+        );
+        timesGenerated[selection - 1] += 1;
+        break;
+      case 6:
+        hourGlass(
+          numberPrompt("Enter the height of the hourglass: ", 3, 20),
+          symbolPrompt("Enter the preferred symbol: ")
+        );
+        timesGenerated[selection - 1] += 1;
+        break;
+      case 7:
+        ring(
+          numberPrompt("Enter the radius of the ring: ", 3, 20),
+          symbolPrompt("Enter the preferred symbol: ")
+        );
+        timesGenerated[selection - 1] += 1;
+        break;
+    }
     do{
       cout << "\nDo you wish to generate more shapes? (y/n): ";
       cin >> generateMoreShapes;
@@ -252,6 +249,7 @@ int main(){
   //Summary
   cout << "Here is a summary of the shapes that were drawn:\n" << endl;
   for (int i = 0; i < 7; i++){
+    //Using arrays to automate the print out process
     cout << setw(25) << left << shapes[i] << right << timesGenerated[i] << endl;
   }
   cout << "\nThank you for using the Shape Generator!" << endl;
