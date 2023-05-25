@@ -69,6 +69,7 @@ void isoscelesTriangle(int height, char symbol){
   }
 }
 
+
 void house(int heightWithoutRoof, int base ,char symbol){
   /*
     Method that prints out a house with the parameters below:
