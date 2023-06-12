@@ -13,7 +13,6 @@
   "C_Cpp.errorSquiggles": "disabled"
 =======
     "limits": "cpp"
-  }
 =======
     "string": "cpp",
     "bitset": "cpp",
