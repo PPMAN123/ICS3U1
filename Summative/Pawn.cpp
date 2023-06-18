@@ -3,7 +3,6 @@
 #include <fstream>
 #include <string>
 #include <stdlib.h>
-#include <vector>
 #include <ctype.h>
 
 using namespace std;
@@ -28,6 +27,13 @@ class Piece {
       rank = r;
       player = p;
       numOfMoves = 0;
+    }
+
+    Piece(Piece* p){
+      file = p->file;
+      rank = p->rank;
+      player = p->player;
+      numOfMoves = p->numOfMoves;
     }
 
     Piece(){
@@ -99,10 +105,12 @@ class Piece {
        * @params: chessBoard - 2d array that stores the current position of the board
       */
       if (
-        chessBoard[fileToIndex(toF)][rankToIndex(toR)]->toString() != " "
+        chessBoard[rankToIndex(toR)][fileToIndex(toF)]->player != 'e'
         &&
-        chessBoard[fileToIndex(toF)][rankToIndex(toR)]->player !=
-        chessBoard[fileToIndex(file)][rankToIndex(rank)]->player
+        (
+          chessBoard[rankToIndex(toR)][fileToIndex(toF)]->player !=
+        chessBoard[rankToIndex(rank)][fileToIndex(file)]->player
+        )
       ){
         // If the position the piece is going to has a piece that's different to the position that is being moved from
         return true;
@@ -122,10 +130,7 @@ class Piece {
        * @params: toR - the rank the piece is going to
        * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board
       */
-      cout << rank << file << endl;
-      cout << toR << toF << endl;
-      cout << "Base check " << (chessBoard[rankToIndex(toR)][fileToIndex(toF)]->player != chessBoard[rankToIndex(rank)][fileToIndex(file)]->player) << endl;
-      cout << "Range check " << isInRange(toF, toR) << endl;
+
       if (
         (
           chessBoard[rankToIndex(toR)][fileToIndex(toF)]->player !=
@@ -180,17 +185,19 @@ class Pawn: public Piece {
        * @params: toR - rank the piece is going to
        * @returns a boolean that is true when the distance is valid for the pawn
        */
-      if (rank == 2 || rank == 7){
-        // If the pieces are at starting squares
-        if (abs(toR - rank) <= 2 && abs(toR - rank) > 0){
-          // You can move up to 2 spaces forward
-          return true;
-        }
-      } else {
-        // If pawn is not on starting square
-        if (abs(toR - rank) == 1){
-          // Can only move 1 rank up
-          return true;
+      if (file == toF){
+        if (rank == 2 || rank == 7){
+          // If the pieces are at starting squares
+          if (abs(toR - rank) <= 2 && abs(toR - rank) > 0){
+            // You can move up to 2 spaces forward
+            return true;
+          }
+        } else {
+          // If pawn is not on starting square
+          if (abs(toR - rank) == 1){
+            // Can only move 1 rank up
+            return true;
+          }
         }
       }
 
@@ -303,12 +310,6 @@ class Pawn: public Piece {
        */
       if (Piece::isMoveValid(toF, toR, chessBoard)){
         // Base check
-        cout << "Base check passed" << endl;
-        // cout << "Directional check: " << isDirectionValid(toF, toR) << endl;
-        // cout << "Distance check: " << isDistanceValid(toF, toR) << endl;
-        // cout << "Interception check: " << isIntercepted(toF, toR, chessBoard) << endl;
-        cout << "Taking check: " << isTaking(toF, toR, chessBoard) << endl;
-        cout << "En passant check: " << isEnpassant(toF, toR, chessBoard) << endl;
         if (
           (
             isDirectionValid(toF, toR) && 
@@ -316,7 +317,8 @@ class Pawn: public Piece {
             !isIntercepted(toF, toR, chessBoard)
           ) || (
             isTaking(toF, toR, chessBoard) &&
-            isMoveDiagonal(toF, toR)
+            isMoveDiagonal(toF, toR) &&
+            isDirectionValid(toF, toR)
           )
         ){
           // If the direction, distance are valid and it's not intercepted, or if the pawn is taking something and is moving diagonally, it's valid
@@ -726,8 +728,6 @@ class Queen: public Piece {
       Piece* chessBoard[boardSize][boardSize]
     ) override {
       if (Piece::isMoveValid(toF, toR, chessBoard)){
-        cout << "Straight Check " << isStraightValid(toF, toR) << endl;
-        cout << "Straight interception " << isStraightIntercepted(toF, toR, chessBoard) << endl;
         if (
           isStraightValid(toF, toR) && 
           !isStraightIntercepted(toF, toR, chessBoard)
@@ -757,8 +757,6 @@ class King: public Piece {
       int toR,
       Piece* chessBoard[boardSize][boardSize]
     ){
-      cout << "File check" << abs(toF - file) << endl;
-      cout << "Rank check" << abs(toR - rank) << endl;
       if (Piece::isMoveValid(toF, toR, chessBoard)){
         if (abs(toF - file) <= 1 && abs(toR - rank) <= 1){
           return true;
@@ -939,41 +937,39 @@ void saveFen(
   char currentPlayer
 ){
   ofstream gameFens ("Fens.txt");
+  string position = "";
 
   if (gameFens.is_open()){
-    for (int i = 0; i < boardSize; i++){
-      string line = "";
+    for (int r = 7; r >= 0; r--){
       int emptySpaces = 0;
-      for (int j = 0; j < boardSize; j++){
-        if (chessBoard[i][j]->toString() == "  "){
-          emptySpaces++;
-        } else {
-          char currentPiece = chessBoard[i][j]->toString()[1];
-          if (chessBoard[i][j]->player == 'b'){
-            if (emptySpaces > 0){
-              line += emptySpaces + toupper(currentPiece);
-            } else {
-              line += toupper(currentPiece);
-            }
-          } else {
-            if (emptySpaces > 0){
-              line += emptySpaces + tolower(currentPiece);
-            } else {
-              line += tolower(currentPiece);
-            }
-          }
-        }
-        if (j == 7){
+      for (int f = 0; f < boardSize; f++){
+        if (chessBoard[r][f]->player == 'w'){
           if (emptySpaces > 0){
-            line = "8";
+            position += to_string(emptySpaces);
+            emptySpaces = 0;
+          }
+          position += toupper(chessBoard[r][f]->toString()[1]);
+        } else if (chessBoard[r][f]->player == 'b'){
+          if (emptySpaces > 0){
+            position += to_string(emptySpaces);
+            emptySpaces = 0;
+          }
+          position += tolower(chessBoard[r][f]->toString()[1]);
+        } else {
+          emptySpaces++;
+        }
+
+        if (f == 7){
+          if (emptySpaces > 0){
+            position += to_string(emptySpaces);
+            emptySpaces = 0;
           }
         }
       }
-      gameFens << line;
-      if (i < 7){
-        gameFens << '/'; 
-      }
+      position += '/';
     }
+
+    gameFens << position;
     gameFens << ' ' << currentPlayer;
     gameFens.close();
   } else {
@@ -986,15 +982,213 @@ int menu(){
   cout << "\nWelcome to Ethan's Chess game" << endl;
   cout << "\n1) Load game" << endl;
   cout << "\n2) Start new game" << endl;
-  cout << "\n3) Exit" << endl;
+  cout << "\n3) Read the rules" << endl;
+  cout << "\n4) Exit" << endl;
 
   do{
-    cout << "\nMake your choice (1-3): ";
+    cout << "\nMake your choice (1-4): ";
     cin >> choice;
-    if (choice < 1 || choice > 3){
+    if (choice < 1 || choice > 4){
       cout << "\nInvalid option!" << endl;
     }
-  } while (choice < 1 || choice > 3);
+  } while (choice < 1 || choice > 4);
+
+  return choice;
+}
+
+bool castleLong(
+  Piece* (&chessBoard)[boardSize][boardSize],
+  char &currentPlayer
+){
+  if (currentPlayer == 'w'){
+    Piece* king = chessBoard[0][4];
+    Piece* rook = chessBoard[0][0];
+    if (
+      king->player == 'w' && 
+      rook->player == 'w' && 
+      king->toString()[1] == 'K' 
+      && rook->toString()[1] == 'R'
+    ){
+      if (
+        chessBoard[0][1]->player == 'e' && 
+        chessBoard[0][2]->player == 'e' &&
+        chessBoard[0][3]->player == 'e'
+      ){
+        if (chessBoard[0][0]->numOfMoves == 0 && 
+            chessBoard[0][4]->numOfMoves == 0
+        ){
+          rook->file = 'd';
+          king->file = 'c';
+
+          chessBoard[0][0] = new Piece('a', 1, 'e');
+          chessBoard[0][4] = new Piece('e', 1, 'e');
+
+          chessBoard[0][2] = king;
+          chessBoard[0][3] = rook;
+
+          if (isUnderCheck(chessBoard, currentPlayer)){
+            rook->file = 'a';
+            king->file = 'e';
+
+            chessBoard[0][0] = rook;
+            chessBoard[0][4] = king;
+
+            return false;
+          } else {
+            chessBoard[0][2]->numOfMoves++;
+            chessBoard[0][3]->numOfMoves++;
+
+            return true;
+          }
+        }
+      }
+    }
+  } else if (currentPlayer == 'b'){
+    Piece* king = chessBoard[7][4];
+    Piece* rook = chessBoard[7][0];
+    if (
+      king->player == 'b' && 
+      rook->player == 'b' &&
+      king->toString()[1] == 'K' &&
+      rook->toString()[1] == 'R'
+    ){
+      if (chessBoard[7][1]->player == 'e' && 
+          chessBoard[7][2]->player == 'e' &&
+          chessBoard[7][3]->player == 'e'
+      ){
+        if (chessBoard[7][0]->numOfMoves == 0 && 
+            chessBoard[7][4]->numOfMoves == 0
+        ){
+          rook->file = 'd';
+          king->file = 'c';
+
+          chessBoard[7][0] = new Piece('a', 1, 'e');
+          chessBoard[7][4] = new Piece('e', 1, 'e');
+
+          chessBoard[7][2] = king;
+          chessBoard[7][3] = rook;
+
+          if (isUnderCheck(chessBoard, currentPlayer)){
+            rook->file = 'a';
+            king->file = 'e';
+
+            chessBoard[7][0] = rook;
+            chessBoard[7][4] = king;
+
+            return false;
+          } else {
+            chessBoard[7][2]->numOfMoves++;
+            chessBoard[7][3]->numOfMoves++;
+
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+bool castleShort(
+  Piece* (&chessBoard)[boardSize][boardSize],
+  char &currentPlayer
+){
+  if (currentPlayer == 'w'){
+    Piece* king = chessBoard[0][4];
+    Piece* rook = chessBoard[0][7];
+    if (
+      king->player == 'w' && 
+      rook->player == 'w' && 
+      king->toString()[1] == 'K' 
+      && rook->toString()[1] == 'R'
+    ){
+      if (chessBoard[0][6]->player == 'e' && 
+          chessBoard[0][5]->player == 'e'
+      ){
+        if (chessBoard[0][7]->numOfMoves == 0 && 
+            chessBoard[0][4]->numOfMoves == 0
+        ){
+          rook->file = 'f';
+          king->file = 'g';
+
+          chessBoard[0][7] = new Piece('a', 1, 'e');
+          chessBoard[0][4] = new Piece('e', 1, 'e');
+
+          chessBoard[0][6] = king;
+          chessBoard[0][5] = rook;
+
+          if (isUnderCheck(chessBoard, currentPlayer)){
+            rook->file = 'h';
+            king->file = 'e';
+
+            chessBoard[0][7] = rook;
+            chessBoard[0][4] = king;
+
+            return false;
+          } else {
+            chessBoard[0][6]->numOfMoves++;
+            chessBoard[0][5]->numOfMoves++;
+
+            return true;
+          }
+        }
+      }
+    }
+  } else if (currentPlayer == 'b'){
+    Piece* king = chessBoard[7][4];
+    Piece* rook = chessBoard[7][7];
+    if (
+      king->player == 'b' && 
+      rook->player == 'b' &&
+      king->toString()[1] == 'K' &&
+      rook->toString()[1] == 'R'
+    ){
+      if (chessBoard[7][6]->player == 'e' && 
+          chessBoard[7][5]->player == 'e'
+      ){
+        if (chessBoard[7][7]->numOfMoves == 0 && 
+            chessBoard[7][4]->numOfMoves == 0
+        ){
+          rook->file = 'f';
+          king->file = 'g';
+
+          chessBoard[7][7] = new Piece('a', 1, 'e');
+          chessBoard[7][4] = new Piece('e', 1, 'e');
+
+          chessBoard[7][6] = king;
+          chessBoard[7][5] = rook;
+
+          if (isUnderCheck(chessBoard, currentPlayer)){
+            rook->file = 'h';
+            king->file = 'e';
+
+            chessBoard[7][7] = rook;
+            chessBoard[7][4] = king;
+            return false;
+          } else {
+            chessBoard[7][6]->numOfMoves++;
+            chessBoard[7][5]->numOfMoves++;
+
+            return true;
+          }
+        }
+      }
+    }
+  }
+
+  return false;
+}
+
+string lowerString(
+  string inputString
+){
+  string newString = "";
+  for (int i = 0; i < inputString.length(); i++){
+    newString += tolower(inputString[i]);
+  }
+
+  return newString;
 }
 
 bool movePiece(
@@ -1006,164 +1200,85 @@ bool movePiece(
   cout << "\nEnter the piece you want to move and where to move it to: ";
   cin >> fromSquare; // d2
   cin >> toSquare; // d4
-  int fromR = fromSquare[1] - '0';
-  int toR = toSquare[1] - '0';
 
-  cout << "From indices " << Piece::rankToIndex(fromR) << Piece::fileToIndex(fromSquare[0]) << endl;
+  if (fromSquare != lowerString("castle")){
+    int fromR = fromSquare[1] - '0';
+    int toR = toSquare[1] - '0';
 
-  Piece* movingPiece = chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(fromSquare[0])];
+    cout << "From indices " << Piece::rankToIndex(fromR) << Piece::fileToIndex(tolower(fromSquare[0])) << endl;
 
-  Piece* destination = chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(toSquare[0])];
+    Piece* movingPiece = chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(tolower(fromSquare[0]))];
 
-  cout << fromR << toR << endl;
-  cout << movingPiece->file << movingPiece->rank << endl;
-  cout << movingPiece->toString() << endl;
+    Piece* destination = chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(tolower(toSquare[0]))];
 
-  if (movingPiece->player == currentPlayer){
-    cout << "Proper player" << endl;
-    if (movingPiece->isMoveValid(toSquare[0], toR, chessBoard)){
-      cout << "Valid Move" << endl;
-      movingPiece->file = toSquare[0];
-      movingPiece->rank = toR;
-      chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(toSquare[0])] = movingPiece;
+    if (movingPiece->player == currentPlayer){
+      if (movingPiece->isMoveValid(tolower(toSquare[0]), toR, chessBoard)){
+        movingPiece->file = tolower(toSquare[0]);
+        movingPiece->rank = toR;
+        chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(tolower(toSquare[0]))] = movingPiece;
 
-      chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(fromSquare[0])] = new Piece(fromSquare[0], fromR, 'e'); 
+        chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(tolower(fromSquare[0]))] = new Piece(tolower(fromSquare[0]), fromR, 'e'); 
 
-      if (isUnderCheck(chessBoard, currentPlayer)){
-        movingPiece->file = fromSquare[0];
-        movingPiece->rank = fromR;
-        chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(toSquare[0])] = destination;
-        chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(fromSquare[0])] = movingPiece;
+        if (isUnderCheck(chessBoard, currentPlayer)){
+          movingPiece->file = tolower(fromSquare[0]);
+          movingPiece->rank = fromR;
+          chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(tolower(toSquare[0]))] = destination;
+          chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(tolower(fromSquare[0]))] = movingPiece;
 
-        return false;
+          return false;
+        } else {
+          movingPiece->numOfMoves++;
+        }
       } else {
-        movingPiece->numOfMoves++;
+        return false;
       }
     } else {
       return false;
     }
   } else {
-    return false;
+    if (toSquare == lowerString("long")){
+      return castleLong(chessBoard, currentPlayer);
+    } else if (toSquare == lowerString("short")){
+      return castleShort(chessBoard, currentPlayer);
+    } else {
+      return false;
+    }
   }
 
   return true;
 }
 
-struct Coord {
-  char file;
-  int rank;
-  bool covered = false;
-};
-
 bool isCheckmate(
   Piece* chessBoard[boardSize][boardSize],
   char currentPlayer
 ){
-  int invalidSquares = 0;
-  int legalMoves = 0;
   char opponentPlayer = currentPlayer == 'w' ? 'b' : 'w';
 
-  Piece* king;
-  for (int r = 0; r < boardSize; r++){
-    for (int f = 0; f < boardSize; f++){
-      string currentPiece = chessBoard[r][f]->toString();
-      if (currentPiece[0] == opponentPlayer && currentPiece[1] == 'K'){
-        king = chessBoard[r][f];
-      }
-    }
-  }
+  if (isUnderCheck(chessBoard, opponentPlayer)){
+    for (int r = 0; r < boardSize; r++){
+      for (int f = 0; f < boardSize; f++){
+        Piece* currentPiece = chessBoard[r][f];
+        cout << "CURRENT MOVING PIECE FOR TESTING CHECKMATE" << currentPiece->toString() << r << f << endl;
+        if (currentPiece->player == opponentPlayer){
+          for (int toR = 0; toR < boardSize; toR++){
+            for (int toF = 0; toF < boardSize; toF++){
+              Piece* targetPiece = chessBoard[toR][toF];
+              if (currentPiece->isMoveValid(toF + 97, toR + 1, chessBoard)){
+                currentPiece->file = toF + 97;
+                currentPiece->rank = toR + 1;
 
-  vector<Coord> spacesAroundKing(8);
-  spacesAroundKing[0].file = king->file - 1;
-  spacesAroundKing[0].rank = king->rank + 1;
-  spacesAroundKing[1].file = king->file;
-  spacesAroundKing[1].rank = king->rank + 1;
-  spacesAroundKing[2].file = king->file + 1;
-  spacesAroundKing[2].rank = king->rank + 1;
-  spacesAroundKing[3].file = king->file + 1;
-  spacesAroundKing[3].rank = king->rank;
-  spacesAroundKing[4].file = king->file + 1;
-  spacesAroundKing[4].rank = king->rank - 1;
-  spacesAroundKing[5].file = king->file;
-  spacesAroundKing[5].rank = king->rank - 1;
-  spacesAroundKing[6].file = king->file - 1;
-  spacesAroundKing[6].rank = king->rank - 1;
-  spacesAroundKing[7].file = king->file - 1;
-  spacesAroundKing[7].rank = king->rank;
+                chessBoard[toR][toF] = currentPiece;
+                chessBoard[r][f] = new Piece(f + 97, r + 1, 'e');
+                bool checkStatus = isUnderCheck(chessBoard, opponentPlayer);
+                
+                currentPiece->file = f + 97;
+                currentPiece->rank = r + 1;
+                chessBoard[r][f] = currentPiece;
+                chessBoard[toR][toF] = targetPiece;
 
-
-  for (int i = 0; i < 8; i++){
-    if (!king->isMoveValid(spacesAroundKing[i].file, spacesAroundKing[i].rank, chessBoard)){
-      spacesAroundKing[i].covered = true;
-    } else {
-      for (int r = 0; r < 8; r++){
-        for (int f = 0; f < 8; f++){
-          if (chessBoard[r][f]->player != 'e'){
-            if (chessBoard[r][f]->isMoveValid(spacesAroundKing[i].file, spacesAroundKing[i].rank, chessBoard)){
-              spacesAroundKing[i].covered = true;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  for (int i = 0; i < 8; i++){
-    if (spacesAroundKing[i].covered){
-      invalidSquares++;
-    }
-  }
-
-  cout << "inValid squares around king" << invalidSquares << endl;
-
-  if (invalidSquares == 8 && isUnderCheck(chessBoard, opponentPlayer)){
-    for (int r = 0; r < 8; r++){
-      for (int f = 0; f < 8; f++){
-        if (chessBoard[r][f]->player == currentPlayer){
-          if (chessBoard[r][f]->isMoveValid(f + 97, r + 1, chessBoard)){
-            Piece* checkingPiece = chessBoard[r][f];
-          }
-        }
-      }
-    }
-
-    for (int r = 0; r < 8; r++){
-      for (int f = 0; f < 8; f++){
-        if (chessBoard[r][f]->player == opponentPlayer){
-          for (int toR = 0; toR < 8; toR++){
-            for (int toF = 0; toF < 8; toF++){
-              Piece* tempBoard[boardSize][boardSize];
-              for (int boardR = 0; boardR < 8; boardR++){
-                for (int boardF = 0; boardF < 8; boardF++){
-                  tempBoard[boardR][boardF] = chessBoard[boardR][boardF];
+                if (!checkStatus){
+                  return false;
                 }
-              }
-
-              Piece* movingPiece = tempBoard[r][f];
-
-              Piece* destination = tempBoard[toR][toF];
-              
-              if (movingPiece->isMoveValid(toF + 97, toR + 1, chessBoard)){
-                cout << "Valid Move" << endl;
-                movingPiece->file = toF + 97;
-                movingPiece->rank = toR + 1;
-                tempBoard[r][f] = movingPiece;
-
-                chessBoard[r][f] = new Piece(f + 97, r + 1, 'e'); 
-
-                if (!isUnderCheck(chessBoard, opponentPlayer)){
-                  legalMoves++;
-                }
-                // if (isUnderCheck(chessBoard, currentPlayer)){
-                //   movingPiece->file = fromSquare[0];
-                //   movingPiece->rank = fromR;
-                //   chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(toSquare[0])] = destination;
-                //   chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(fromSquare[0])] = movingPiece;
-
-                //   return false;
-                // } else {
-                //   movingPiece->numOfMoves++;
-                // }
               }
             }
           }
@@ -1171,9 +1286,7 @@ bool isCheckmate(
       }
     }
 
-    if (legalMoves == 0){
-      return true;
-    }
+    return true;
   }
 
   return false;
@@ -1181,7 +1294,7 @@ bool isCheckmate(
 
 void readFen(
   Piece* (&chessBoard)[boardSize][boardSize],
-  char currentPlayer
+  char &currentPlayer
 ){
   ifstream gameFens ("Fens.txt");
   string boardLayout;
@@ -1190,53 +1303,51 @@ void readFen(
     gameFens >> boardLayout;
     gameFens >> currentPlayer;
 
-    for (int i = 0, r = 0, f = 0; i < boardLayout.length(); i++){
-      char player;
+    char player;
 
+    for (int i = 0, r = 7, f = 0; i < boardLayout.length(); i++){
       if (boardLayout[i] == '/'){
-        f++;
-      } else {
-        if (isdigit(boardLayout[i])){
-          for (int j = r; j < r + (boardLayout[i] - '0'); j++){
-            chessBoard[j][f] = new Piece(j + 97, f + 1, 'e');
-          }
-          r += boardLayout[i] - '0';
-        } else {
-          if (islower(boardLayout[i])){
-            player = 'b';
-          } else {
-            player = 'w';
-          }
-
-          switch(toupper(boardLayout[i])){
-            case 'R':
-              chessBoard[r][f] = new Rook(r + 97, f + 1, player);
-              break;
-            case 'N':
-              chessBoard[r][f] = new Knight(r + 97, f + 1, player);
-              break;
-            case 'B':
-              chessBoard[r][f] = new Bishop(r + 97, f + 1, player);
-              break;
-            case 'Q':
-              chessBoard[r][f] = new Queen(r + 97, f + 1, player);
-              break;
-            case 'K':
-              chessBoard[r][f] = new King(r + 97, f + 1, player);
-              break;
-            case 'P':
-              chessBoard[r][f] = new Pawn(r + 97, f + 1, player);
-              break;
-          }
+        r--;
+        f = 0;
+      } else if (isdigit(boardLayout[i])){
+        for (int j = f; j < f + (boardLayout[i] - '0'); j++){
+          chessBoard[r][j] = new Piece(j + 97, r + 1, 'e');
         }
+
+        f += (boardLayout[i] - '0');
+      } else {
+        if (isupper(boardLayout[i])){
+          player = 'w';
+        } else {
+          player = 'b';
+        }
+
+        switch(toupper(boardLayout[i])){
+          case 'P':
+            chessBoard[r][f] = new Pawn(f + 97, r + 1, player);
+            break;
+          case 'N':
+            chessBoard[r][f] = new Knight(f + 97, r + 1, player);
+            break;
+          case 'R':
+            chessBoard[r][f] = new Rook(f + 97, r + 1, player);
+            break;
+          case 'B':
+            chessBoard[r][f] = new Bishop(f + 97, r + 1, player);
+            break;
+          case 'Q':
+            chessBoard[r][f] = new Queen(f + 97, r + 1, player);
+            break;
+          case 'K':
+            chessBoard[r][f] = new King(f + 97, r + 1, player);
+            break;
+        }
+
+        f++;
       }
 
-      if (r == 8){
-        r = 0;
-      } else {
-        r++;
-      }
     }
+
   } else {
     cout << "\nERROR OPENING FILE" << endl;
   }
@@ -1277,35 +1388,87 @@ void initializeBoard(Piece* (&chessBoard)[boardSize][boardSize]){
   chessBoard[7][7] = new Rook('h', 8, 'b');
 }
 
-int main(){
-  Piece* chessBoard[boardSize][boardSize];
-  char currentPlayer = 'w';
+void printRules(){
+  system("CLS"); // For windows
+  //system("clear"); // For linux
+  char confirm;
+
+  cout << "RULES OF ETHAN'S CHESS" << endl;
+  cout << "\n1. When moving a piece, type in the square of the piece, then type in the square of where it should go to" << endl;
+  cout << "\n2. Win by checkmate" << endl;
+  cout << "\n3. There's no promotions (I'm a bad programmer)" << endl;
+
+  cout << "\nType any key to continue: ";
+  cin >> confirm;
+}
+
+bool menuSwitch(
+  Piece* (&chessBoard)[boardSize][boardSize],
+  char &currentPlayer
+){
+  system("CLS"); // For Windows
+  //system("clear"); // For linux
   
   switch(menu()){
     case 1:
       readFen(chessBoard, currentPlayer);
-      printCurrentBoard(chessBoard);
       break;
     case 2:
       initializeBoard(chessBoard);
       break;
     case 3:
-      return 0;
+      printRules();
+      menuSwitch(chessBoard, currentPlayer);
+      break;
+    case 4:
+      return true;
       break;
   }
 
+  return false;
+}
 
-  while (true) {
+int main(){
+  Piece* chessBoard[boardSize][boardSize];
+  char currentPlayer = 'w';
+  
+  if (menuSwitch(chessBoard, currentPlayer)){
+    return 0;
+  }
+
+  bool isGameOver = false;
+  bool validMove = true;
+
+  while (!isGameOver) {
+    system("CLS"); // For windows
+    //system("clear") // For linux
+
     printCurrentBoard(chessBoard);
     saveFen(chessBoard, currentPlayer);
-    cout << currentPlayer << endl;
-    bool validMove = movePiece(chessBoard, currentPlayer);
-    if (validMove){
-      currentPlayer = currentPlayer == 'w' ? 'b' : 'w';
-    } else {
-      cout << "Invalid move" << endl;
+
+    if (!validMove){
+      cout << "\nINVALID MOVE" << endl;
     }
-    cout << currentPlayer << endl;
-    isCheckmate(chessBoard, currentPlayer);
+
+    if (currentPlayer == 'w'){
+      cout << "\nWHITE TO PLAY" << endl;
+    } else {
+      cout << "\nBLACK TO PLAY" << endl;
+    }
+    
+    validMove = movePiece(chessBoard, currentPlayer);
+    if (validMove){
+      isGameOver = isCheckmate(chessBoard, currentPlayer);
+      currentPlayer = currentPlayer == 'w' ? 'b' : 'w';
+    }
+  }
+
+  system("CLS"); // For Windows
+  // system("clear"); // For linux
+
+  if (currentPlayer == 'b'){
+    cout << "WHITE WINS" << endl;
+  } else{
+    cout << "BLACK WINS" << endl;
   }
 }
