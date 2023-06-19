@@ -9,7 +9,6 @@ using namespace std;
 
 const int boardSize = 8;
 
-
 class Piece {
   /**
    * General class for all pieces to inherit, with basic stats
@@ -72,6 +71,14 @@ class Piece {
         // If it's an empty square
         return "  ";
       }
+    }
+
+    bool isEnpassant(
+      char toF, 
+      int toR,
+      Piece* chessBoard[boardSize][boardSize]
+    ){
+      return false;
     }
 
     bool isInRange(char file, int rank){
@@ -500,6 +507,7 @@ class Bishop: public Piece {
   using Piece::Piece;
   public:
     string toString() override {
+      // String representation of the bishop
       return Piece::toString() + "B";
     }
 
@@ -507,7 +515,14 @@ class Bishop: public Piece {
       char toF,
       int toR
     ){
+      /**
+       * @brief Checks if the direction of the bishop is valid
+       * @params: toF - file the piece is going to
+       * @params: toR - rank the piece is going to
+       * @returns a boolean that is true when the direction of the knight is valid
+       */
       if (abs(toF-file) == abs(toR-rank)){
+        // If the file and the rank difference is equal, it's going diagonal
         return true;
       }
 
@@ -519,6 +534,14 @@ class Bishop: public Piece {
       int toR,
       Piece* chessBoard[boardSize][boardSize]
     ){
+      /**
+       * @brief Checks if the bishop is intercepted on its way to the destination square
+       * @params: toF - file the piece is going to
+       * @params: toR - rank the piece is going to
+       * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board
+       * @returns a boolean that is true when the bishop is intercepted
+      */
+
       if (toF - file > 0){
         // If going right
         for (int i = fileToIndex(file + 1); i < fileToIndex(toF); i++){
@@ -581,8 +604,16 @@ class Bishop: public Piece {
       int toR,
       Piece* chessBoard[boardSize][boardSize]
     ) override {
+      /**
+       * @brief Overridden function that checks if the move is valid for a Bishop
+       * @params: toF - file the piece is going to
+       * @params: toR - rank the piece is going to
+       * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+       * @returns a boolean that is true when the move is valid
+       */
       if (Piece::isMoveValid(toF, toR, chessBoard)){
         if (isDirectionValid(toF, toR) && !isIntercepted(toF, toR, chessBoard)){
+          // If direction is valid and not intercepted, it's a valid move
           return true;
         }
       }
@@ -595,6 +626,7 @@ class Queen: public Piece {
   using Piece::Piece;
   public:
     string toString() override{
+      // String representation of the queen
       return Piece::toString() + "Q";
     }
 
@@ -602,6 +634,7 @@ class Queen: public Piece {
       char toF,
       int toR
     ){
+      // The isDirectionValid function stolen from the rook
       if (toF == file || toR == rank){
         return true;
       }
@@ -614,6 +647,7 @@ class Queen: public Piece {
       int toR,
       Piece* chessBoard[boardSize][boardSize]
     ){
+      // The isIntercepted function from the rook
       if (toF == file){
         if (toR > rank){
           for (int i = rankToIndex(rank) + 1; i < rankToIndex(toR); i++){
@@ -651,6 +685,7 @@ class Queen: public Piece {
       char toF,
       int toR
     ){
+      // The isDirectionValid function from the bishop
       if (abs(toF-file) == abs(toR-rank)){
         return true;
       }
@@ -663,6 +698,7 @@ class Queen: public Piece {
       int toR,
       Piece* chessBoard[boardSize][boardSize]
     ){
+      // The isIntercepted function from the bishop
       if (toF - file > 0){
         // If going right
         for (int i = fileToIndex(file + 1); i < fileToIndex(toF); i++){
@@ -727,16 +763,25 @@ class Queen: public Piece {
       int toR,
       Piece* chessBoard[boardSize][boardSize]
     ) override {
+      /**
+       * @brief Overridden function that checks if the move is valid for a Queen
+       * @params: toF - file the piece is going to
+       * @params: toR - rank the piece is going to
+       * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+       * @returns a boolean that is true when the move is valid
+       */
       if (Piece::isMoveValid(toF, toR, chessBoard)){
         if (
           isStraightValid(toF, toR) && 
           !isStraightIntercepted(toF, toR, chessBoard)
         ){
+          // If it's moving like a rook, it's valid
           return true;
         } else if (
           isDiagonalValid(toF, toR) && 
           !isDiagonalIntercepted(toF, toR, chessBoard)
         ){
+          // Or if it's moving like a bishop, it's valid
           return true;
         }
       }
@@ -749,6 +794,7 @@ class King: public Piece {
   using Piece::Piece;
   public:
     string toString() override {
+      // String representation of the king
       return Piece::toString() + 'K';
     }
 
@@ -757,8 +803,16 @@ class King: public Piece {
       int toR,
       Piece* chessBoard[boardSize][boardSize]
     ){
+      /**
+       * @brief Overridden function that checks if the move is valid for a King
+       * @params: toF - file the piece is going to
+       * @params: toR - rank the piece is going to
+       * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+       * @returns a boolean that is true when the move is valid
+       */
       if (Piece::isMoveValid(toF, toR, chessBoard)){
         if (abs(toF - file) <= 1 && abs(toR - rank) <= 1){
+          // If the file and rank moves less or equal to one square, it's valid (Base check already checks for if it's moving to same position)
           return true;
         }
       }
@@ -768,29 +822,43 @@ class King: public Piece {
 };
 
 void makeBackgroundBlack(){
+  // Helper function to print the board, makes background black
   cout << "\x1b[40m";
 }
 
 void makeBackgroundWhite(){
+  // Helper function to print the board, makes background white
   cout << "\x1b[47m";
 }
 
 void printBlankSpaces(bool isStartingBlack){
-  cout << "   ";
+  /**
+   * @brief A helper function that prints the empty filler spaces within the chess board
+   * @params: isStartingBlack - boolean that keeps track if the starting grid of the row is black
+  */
+
+  cout << "   "; // Spacer
+
   for (int i = 0; i < 57; i++){
+    // 57 square wide
     if (i % 7 == 0){
-      cout << "\x1b[0m";
+      // Every 7 spaces, print a bar
+      cout << "\x1b[0m"; // Resets the background colours
       cout << '|';
     } else {
       if (isStartingBlack){
+        // If it starts with black
         if (i % 14 > 0 && i % 14 < 7){
+          // Makes the grid black, and prints empty spaces
           makeBackgroundBlack();
           cout << ' ';
         } else if (i % 14 > 7 && i % 14 != 0){
+          // Makes the grid white, and prints empty spaces
           makeBackgroundWhite();
           cout << ' ';
         }
       } else {
+        // If it starts with white, flip the operations
         if (i % 14 > 0 && i % 14 < 7){
           makeBackgroundWhite();
           cout << ' ';
@@ -800,6 +868,7 @@ void printBlankSpaces(bool isStartingBlack){
         }
       }
       if (i == 56){
+        // Print a bar at the end of every line
         cout << '|';
       }
     }
@@ -807,16 +876,23 @@ void printBlankSpaces(bool isStartingBlack){
 }
 
 void printFiles(){
-  string files = "abcdefgh";
+  /**
+   * @brief Prints the files of the board
+  */
 
-  cout << "   ";
+  string files = "abcdefgh"; // String of all the files
+
+  cout << "   "; // Spacer
 
   for (int i = 0, j = 0; i < 57; i++){
+    // 57 Wide grid
+
     if (i % 7 == 3){
-      cout << files[j];
-      j++;
+      // When it's at the middle of the square
+      cout << files[j]; // Print the current file
+      j++; // Increment iterator for the string
     } else {
-      cout << ' ';
+      cout << ' '; // Print an empty square when it's not in the middle of a square
     }
   }
 
@@ -1218,6 +1294,14 @@ bool movePiece(
         chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(tolower(toSquare[0]))] = movingPiece;
 
         chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(tolower(fromSquare[0]))] = new Piece(tolower(fromSquare[0]), fromR, 'e'); 
+
+        if (movingPiece->toString()[1] == 'P'){
+          if (movingPiece->player == 'w'){
+            chessBoard[Piece::rankToIndex(toR) - 1][Piece::fileToIndex(tolower(toSquare[0]))] = new Piece(tolower(fromSquare[0]), fromR - 1, 'e');
+          } else if (movingPiece->player == 'b'){
+            chessBoard[Piece::rankToIndex(toR) + 1][Piece::fileToIndex(tolower(toSquare[0]))] = new Piece(tolower(fromSquare[0]), fromR + 1, 'e');
+          }
+        }
 
         if (isUnderCheck(chessBoard, currentPlayer)){
           movingPiece->file = tolower(fromSquare[0]);
