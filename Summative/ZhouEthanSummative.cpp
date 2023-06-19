@@ -900,40 +900,58 @@ void printFiles(){
 }
 
 void printCurrentBoard(Piece* chessBoard[boardSize][boardSize]){
+  /**
+   * @brief Function that prints out the chess board
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   */
+
   bool isSquareBlack = false;
   bool isStartingBlack = false;
 
-  printFiles();
+  printFiles(); // Print the files of the chess board
 
   for (int y = 7; y >= 0; y--){
-    cout << "   ";
+    // Prints out the borders
+    cout << "   "; // Spacer
     for (int i = 0; i < 57; i++){
-        if (i % 7 == 0){
-          cout << '+';
-        } else {
-          cout << "-";
-        }
+      // 57 Wide board
+      if (i % 7 == 0){
+        // Every 7 spaces, print edge
+        cout << '+';
+      } else {
+        // Otherwise, print a dash
+        cout << "-";
       }
+    }
 
     cout << endl;
 
-    printBlankSpaces(isStartingBlack);
+    printBlankSpaces(isStartingBlack); // Print the blank spaces
 
     cout << endl;
-    cout << y + 1;
+
+    cout << y + 1; // Print the ranks
     cout << "  ";
+
     for (int x = 0; x < boardSize; x++){
-      cout << "\x1b[0m";
+      // Loop through the pieces
+      cout << "\x1b[0m"; // Print a normal bar
       cout << '|';
 
       if (isSquareBlack){
+        // If square is black
         makeBackgroundBlack();
+
+        // Print the piece text in white text
         cout << "  ";
         cout << "\x1b[37m";
         cout << chessBoard[y][x]->toString();
         cout << "  ";
       } else {
+        // If square is white
         makeBackgroundWhite();
+
+        // Print the piece text in black text
         cout << "  ";
         cout << "\x1b[37m";
         cout << chessBoard[y][x]->toString();
@@ -941,11 +959,13 @@ void printCurrentBoard(Piece* chessBoard[boardSize][boardSize]){
       }
 
       if (x == 7){
+        // Print a normal bar in the end
         cout << "\x1b[0m";
         cout << '|';
       }
 
       if (x != 7){
+        // Swap the colours
         isSquareBlack = !isSquareBlack;
       }
     }
@@ -957,12 +977,12 @@ void printCurrentBoard(Piece* chessBoard[boardSize][boardSize]){
     printBlankSpaces(isStartingBlack);
 
     cout << endl;
-    isStartingBlack = !isStartingBlack;
-
+    isStartingBlack = !isStartingBlack; // Swap the starting grid colour
   }
 
   cout << "   ";
   for (int i = 0; i < 57; i++){
+    // Print edge on the end
     if (i % 7 == 0){
       cout << '+';
     } else {
@@ -972,16 +992,23 @@ void printCurrentBoard(Piece* chessBoard[boardSize][boardSize]){
 
   cout << endl;
   
-  printFiles();
+  printFiles(); // Print the files again
 }
 
 bool isUnderCheck(
   Piece* chessBoard[boardSize][boardSize],
   char currentPlayer
 ){
+  /**
+   * @brief Checks if the current player is under check
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   * @params: currentPlayer - char the keeps track of the current player
+   * @returns a boolean that is true when the current player is under check
+   */
   Piece* king;
   for (int r = 0; r < boardSize; r++){
     for (int f = 0; f < boardSize; f++){
+      // Find the king of the current player on the board
       string currentPiece = chessBoard[r][f]->toString();
       if (currentPiece[0] == currentPlayer && currentPiece[1] == 'K'){
         king = chessBoard[r][f];
@@ -996,9 +1023,7 @@ bool isUnderCheck(
       Piece* currentPiece = chessBoard[r][f];
       if (currentPiece->player == opponentPlayer){
         if (currentPiece->isMoveValid(king->file, king->rank, chessBoard)){
-          cout << "CHECK" << endl;
-          cout << currentPiece->toString() << endl;
-          cout << currentPiece->file << currentPiece->rank << endl;
+          // If an opponent piece can take the king, it is under check
           return true;
         }
       }
@@ -1012,43 +1037,56 @@ void saveFen(
   Piece* chessBoard[boardSize][boardSize],
   char currentPlayer
 ){
+  /**
+   * @brief Saves the current position in FEN notation
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   * @params: currentPlayer - char the keeps track of the current player
+   */
+
   ofstream gameFens ("Fens.txt");
-  string position = "";
+  string position = ""; // String that keeps track of what to input into the text file
 
   if (gameFens.is_open()){
     for (int r = 7; r >= 0; r--){
-      int emptySpaces = 0;
+      // Loop through the ranks of the chess board
+      int emptySpaces = 0; // Integer that keeps track of the empty spaces
       for (int f = 0; f < boardSize; f++){
+        // Loop through the files of the chessboard
         if (chessBoard[r][f]->player == 'w'){
+          // If piece is white
           if (emptySpaces > 0){
+            // If empty spaces are more than zero, add it to the string
             position += to_string(emptySpaces);
             emptySpaces = 0;
           }
-          position += toupper(chessBoard[r][f]->toString()[1]);
+          position += toupper(chessBoard[r][f]->toString()[1]); // Add upper case of current piece to the string
         } else if (chessBoard[r][f]->player == 'b'){
+          // Same logic but for black pieces
           if (emptySpaces > 0){
             position += to_string(emptySpaces);
             emptySpaces = 0;
           }
-          position += tolower(chessBoard[r][f]->toString()[1]);
+          position += tolower(chessBoard[r][f]->toString()[1]); // Add lower case of current piece to string
         } else {
-          emptySpaces++;
+          emptySpaces++; // If it's an empty space, increment counter of empty spaces
         }
 
         if (f == 7){
+          // If reached the end of the rank
           if (emptySpaces > 0){
-            position += to_string(emptySpaces);
-            emptySpaces = 0;
+            position += to_string(emptySpaces); // Add emtpy spaces count to the string if it's more than 0
+            emptySpaces = 0; // Reset number of empty spaces
           }
         }
       }
-      position += '/';
+      position += '/'; // Add a forward slash after every rank
     }
 
-    gameFens << position;
-    gameFens << ' ' << currentPlayer;
+    gameFens << position; // Write position into file
+    gameFens << ' ' << currentPlayer; // Write current player after
     gameFens.close();
   } else {
+    // If file won't open
     cout << "\nERROR, FILE BROKEN" << endl;
   }
 }
@@ -1109,6 +1147,10 @@ bool castleLong(
             chessBoard[0][0] = rook;
             chessBoard[0][4] = king;
 
+            chessBoard[0][1] = new Piece('b', 1, 'e');
+            chessBoard[0][2] = new Piece('c', 1, 'e');
+            chessBoard[0][3] = new Piece('d', 1, 'e');
+
             return false;
           } else {
             chessBoard[0][2]->numOfMoves++;
@@ -1150,6 +1192,10 @@ bool castleLong(
 
             chessBoard[7][0] = rook;
             chessBoard[7][4] = king;
+
+            chessBoard[7][1] = new Piece('b', 8, 'e');
+            chessBoard[7][2] = new Piece('c', 8, 'e');
+            chessBoard[7][3] = new Piece('d', 8, 'e');
 
             return false;
           } else {
@@ -1201,6 +1247,8 @@ bool castleShort(
             chessBoard[0][7] = rook;
             chessBoard[0][4] = king;
 
+            chessBoard[0][5] = new Piece('f', 1, 'e');
+            chessBoard[0][6] = new Piece('g', 1, 'e');
             return false;
           } else {
             chessBoard[0][6]->numOfMoves++;
@@ -1229,8 +1277,8 @@ bool castleShort(
           rook->file = 'f';
           king->file = 'g';
 
-          chessBoard[7][7] = new Piece('a', 1, 'e');
-          chessBoard[7][4] = new Piece('e', 1, 'e');
+          chessBoard[7][7] = new Piece('a', 8, 'e');
+          chessBoard[7][4] = new Piece('e', 8, 'e');
 
           chessBoard[7][6] = king;
           chessBoard[7][5] = rook;
@@ -1241,6 +1289,10 @@ bool castleShort(
 
             chessBoard[7][7] = rook;
             chessBoard[7][4] = king;
+
+            chessBoard[7][5] = new Piece('f', 8, 'e');
+            chessBoard[7][6] = new Piece('g', 8, 'e');
+
             return false;
           } else {
             chessBoard[7][6]->numOfMoves++;
@@ -1259,6 +1311,7 @@ bool castleShort(
 string lowerString(
   string inputString
 ){
+  // Helper function that lower cases an entire string
   string newString = "";
   for (int i = 0; i < inputString.length(); i++){
     newString += tolower(inputString[i]);
@@ -1439,6 +1492,9 @@ void readFen(
 }
 
 void initializeBoard(Piece* (&chessBoard)[boardSize][boardSize]){
+  // Initializes the board
+
+  // Puts the white pieces where they go
   chessBoard[0][0] = new Rook('a', 1, 'w');
   chessBoard[0][1] = new Knight('b', 1, 'w');
   chessBoard[0][2] = new Bishop('c', 1, 'w');
@@ -1449,19 +1505,23 @@ void initializeBoard(Piece* (&chessBoard)[boardSize][boardSize]){
   chessBoard[0][7] = new Rook('h', 1, 'w');
 
   for (int i = 0; i < boardSize; i++){
+    // Puts the white pawns where they go
     chessBoard[1][i] = new Pawn(97 + i, 2, 'w');
   }
 
   for (int i = 2; i < boardSize - 2; i++){
     for (int j = 0; j < boardSize; j++){
+      // Puts the empty spaces in the middle
       chessBoard[i][j] = new Piece(97 + j, i + 1, 'e');
     }
   }
 
   for (int i = 0; i < boardSize; i++){
+    // Puts the black pawns on rank 7
     chessBoard[6][i] = new Pawn(97 + i, 7, 'b');
   }
 
+  // Puts the black pieces where they go
   chessBoard[7][0] = new Rook('a', 8, 'b');
   chessBoard[7][1] = new Knight('b', 8, 'b');
   chessBoard[7][2] = new Bishop('c', 8, 'b');
@@ -1473,8 +1533,10 @@ void initializeBoard(Piece* (&chessBoard)[boardSize][boardSize]){
 }
 
 void printRules(){
-  system("CLS"); // For windows
-  //system("clear"); // For linux
+  // Function that prints out the rules of the game
+
+  // system("CLS"); // For windows
+  system("clear"); // For linux
   char confirm;
 
   cout << "RULES OF ETHAN'S CHESS" << endl;
@@ -1482,6 +1544,7 @@ void printRules(){
   cout << "\n2. Win by checkmate" << endl;
   cout << "\n3. There's no promotions (I'm a bad programmer)" << endl;
 
+  // Lets the user move on by typing in a char
   cout << "\nType any key to continue: ";
   cin >> confirm;
 }
@@ -1490,8 +1553,8 @@ bool menuSwitch(
   Piece* (&chessBoard)[boardSize][boardSize],
   char &currentPlayer
 ){
-  system("CLS"); // For Windows
-  //system("clear"); // For linux
+  // system("CLS"); // For Windows
+  system("clear"); // For linux
   
   switch(menu()){
     case 1:
@@ -1513,19 +1576,20 @@ bool menuSwitch(
 }
 
 int main(){
-  Piece* chessBoard[boardSize][boardSize];
-  char currentPlayer = 'w';
+  Piece* chessBoard[boardSize][boardSize]; // 2D array of chess board
+  char currentPlayer = 'w'; // Char that keeps track of current player
   
   if (menuSwitch(chessBoard, currentPlayer)){
+    // Quits game if user wants to quit
     return 0;
   }
 
-  bool isGameOver = false;
-  bool validMove = true;
+  bool isGameOver = false; // Keeps track of game status
+  bool validMove = true; // Keeps track of move validity
 
   while (!isGameOver) {
-    system("CLS"); // For windows
-    //system("clear") // For linux
+    // system("CLS"); // For windows
+    system("clear"); // For linux
 
     printCurrentBoard(chessBoard);
     saveFen(chessBoard, currentPlayer);
@@ -1542,15 +1606,17 @@ int main(){
     
     validMove = movePiece(chessBoard, currentPlayer);
     if (validMove){
+      // If move is valid, check if game is over
       isGameOver = isCheckmate(chessBoard, currentPlayer);
       currentPlayer = currentPlayer == 'w' ? 'b' : 'w';
     }
   }
 
-  system("CLS"); // For Windows
-  // system("clear"); // For linux
+  // system("CLS"); // For Windows
+  system("clear"); // For linux
 
   if (currentPlayer == 'b'){
+    // Since I change the players after, the players are flipped
     cout << "WHITE WINS" << endl;
   } else{
     cout << "BLACK WINS" << endl;
