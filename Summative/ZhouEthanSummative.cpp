@@ -1,3 +1,16 @@
+/**
+ * @file ZhouEthanSummative.cpp
+ * @author Ethan
+ * @brief Text based chess program
+ * @class ICS3U!
+ * @for: Ms. Wun
+ * @version 0.1
+ * @date 2023-06-19
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
+
 #include <iostream>
 #include <utility>
 #include <fstream>
@@ -7,7 +20,7 @@
 
 using namespace std;
 
-const int boardSize = 8;
+const int boardSize = 8; // Board size constant
 
 class Piece {
   /**
@@ -16,12 +29,12 @@ class Piece {
   public:
     char file; // current file the piece is on
     int rank; // current rank the piece is on
-    char player; // which player the piece is
+    char player; // which player the piece is: 'w' = white; 'b' = black; 'e' = empty square
     int numOfMoves; // number of times the piece has moved
 
   public:
     Piece(char f, int r, char p){
-      // Initializer
+      // Initializer for creating new piece
       file = f;
       rank = r;
       player = p;
@@ -29,6 +42,7 @@ class Piece {
     }
 
     Piece(Piece* p){
+      // This was put here for a previous made function that dupes the board, but is now useless, don't wanna remove it, as it could be useful for further development
       file = p->file;
       rank = p->rank;
       player = p->player;
@@ -47,6 +61,7 @@ class Piece {
       /**
        * @brief: Converts a file char to an index
        * @params: file - file the piece is on
+       * @returns an integer that is the index that corresponds to the file
       */
       return file - 97; // Char math magic
     }
@@ -55,6 +70,7 @@ class Piece {
       /**
        * @brief: Converts a rank to an index, created for consistency
        * @params: rank - rank the piece is on
+       * @returns an integer that is the index that corresponds to the file
       */
       return rank - 1;
     }
@@ -73,11 +89,59 @@ class Piece {
       }
     }
 
-    bool isEnpassant(
+    bool isMoveDiagonal(char toF, int toR){
+      /**
+       * @brief Checks if the pawn is moving diagonally forward
+       * @params: toF - file the piece is going to
+       * @params: toR - rank the piece is going to
+       * @returns a boolean that is true when the pawn is moving diagonally
+       */
+      if (abs(toF - file) == 1 && abs(toR - rank) == 1){
+        return true;
+      }
+
+      return false;
+    }
+
+    int squaresMoved(char toF, int toR){
+      /**
+       * @brief Function that returns the amount of squares the pawn moved (don't kno w why it's here, but it works, so I'm not changing anything)
+       * @params: toF - file the piece is going to
+       * @params: toR - rank the piece is going to
+       * @returns an integer that has the total amount of displacement the piece did
+       */
+      return abs(toF - file) + abs(toR - rank);
+    }
+
+    virtual bool isEnpassant(
       char toF, 
       int toR,
       Piece* chessBoard[boardSize][boardSize]
     ){
+      // Made here to override with the pawn, as when en-passanting, the piece removes different squares
+      if (chessBoard[rankToIndex(rank)][fileToIndex(file)]->toString()[1] == 'P'){
+        if (isMoveDiagonal(toF, toR) && squaresMoved(toF, toR) == 2){
+          // If the pawn is moving diagnoally by 1 square up and sideways
+          if (player == 'w' && rank == 5){
+            // If player is white, it can only happen on rank 5
+            if (
+              chessBoard[rankToIndex(5)][fileToIndex(toF)]->numOfMoves == 1 &&
+              chessBoard[rankToIndex(5)][fileToIndex(toF)]->toString()[1] == 'P'
+            ){
+              // If the piece that's next to the pawn doing the en passant is it's first move, and if it's a pawn, you can en passant
+              cout << "EN PASSANT" << endl;
+              return true;
+            }
+          } else if (player == 'b' && rank == 4){
+            // If player is black, it can only happen on rank 4
+            if (chessBoard[rankToIndex(4)][fileToIndex(toF)]->numOfMoves == 1){
+              // If the piece that's next to the pawn doing the en passant is it's first move, and if it's a pawn, you can en passant
+              return true;
+            }
+          }
+        }
+      }
+
       return false;
     }
 
@@ -86,6 +150,7 @@ class Piece {
        * @brief: Checks if the piece is in range
        * @params: file - file of piece
        * @params: rank - rank of piece
+       * @returns a boolean that is true when the piece is in range of the board
       */
       string files = "abcdefgh"; // String with all the available files
 
@@ -110,6 +175,7 @@ class Piece {
        * @params: toF - the file the piece is going to
        * @params: toR - the rank the piece is going to
        * @params: chessBoard - 2d array that stores the current position of the board
+       * @returns a boolean that is true when a piece is taking another piece
       */
       if (
         chessBoard[rankToIndex(toR)][fileToIndex(toF)]->player != 'e'
@@ -119,7 +185,7 @@ class Piece {
         chessBoard[rankToIndex(rank)][fileToIndex(file)]->player
         )
       ){
-        // If the position the piece is going to has a piece that's different to the position that is being moved from
+        // If the position the piece is going to has a piece with a different player that is not empty
         return true;
       }
 
@@ -136,6 +202,7 @@ class Piece {
        * @params: toF - the file the piece is going to
        * @params: toR - the rank the piece is going to
        * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board
+       * @returns a boolean that is true when the move of the piece is valid
       */
 
       if (
@@ -211,65 +278,6 @@ class Pawn: public Piece {
       return false;
     }
 
-    bool isMoveDiagonal(char toF, int toR){
-      /**
-       * @brief Checks if the pawn is moving diagonally forward
-       * @params: toF - file the piece is going to
-       * @params: toR - rank the piece is going to
-       * @returns a boolean that is true when the pawn is moving diagonally
-       */
-      if (abs(toF - file) == 1 && abs(toR - rank) == 1){
-        return true;
-      }
-
-      return false;
-    }
-
-    int squaresMoved(char toF, int toR){
-      /**
-       * @brief Function that returns the amount of squares the pawn moved (don't kno w why it's here, but it works, so I'm not changing anything)
-       * @params: toF - file the piece is going to
-       * @params: toR - rank the piece is going to
-       * @returns an integer that has the total amount of displacement the piece did
-       */
-      return abs(toF - file) + abs(toR - rank);
-    }
-
-    bool isEnpassant(
-      char toF, 
-      int toR,
-      Piece* chessBoard[boardSize][boardSize]
-    ){
-      /**
-       * @brief Checks if the pawn is doing an en-passant (HOLY HELL!1!1!)
-       * @params: toF - file the piece is going to
-       * @params: toR - rank the piece is going to
-       * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board
-       * @returns a boolean that is true when the pawn is doing an en passant
-       */
-      if (isMoveDiagonal(toF, toR) && squaresMoved(toF, toR) == 2){
-        // If the pawn is moving diagnoally by 1 square up and sideways
-        if (player == 'w' && rank == 5){
-          // If player is white, it can only happen on rank 5
-          if (
-            chessBoard[rankToIndex(5)][fileToIndex(toF)]->numOfMoves == 1 &&
-            chessBoard[rankToIndex(5)][fileToIndex(toF)]->toString()[1] == 'P'
-          ){
-            // If the piece that's next to the pawn doing the en passant is it's first move, and if it's a pawn, you can en passant
-            return true;
-          }
-        } else if (player == 'b' && rank == 4){
-          // If player is black, it can only happen on rank 4
-          if (chessBoard[rankToIndex(4)][fileToIndex(toF)]->numOfMoves == 1){
-            // If the piece that's next to the pawn doing the en passant is it's first move, and if it's a pawn, you can en passant
-            return true;
-          }
-        }
-      }
-
-      return false;
-    }
-
     bool isIntercepted(
       char toF,
       int toR,
@@ -331,7 +339,7 @@ class Pawn: public Piece {
           // If the direction, distance are valid and it's not intercepted, or if the pawn is taking something and is moving diagonally, it's valid
           return true;
         } else {
-          if (isEnpassant(toF, toR, chessBoard)){
+          if (Piece::isEnpassant(toF, toR, chessBoard)){
             // If it's en passanting, return valid as well (made because en passant breaks a lot of the normal pawn rules)
             return true;
           }
@@ -1092,7 +1100,14 @@ void saveFen(
 }
 
 int menu(){
-  int choice;
+  /**
+   * @brief Function that handles logic for choosing a main menu option
+   * @returns an integer that represents the choice
+   */
+
+  int choice; // Integer of the choice
+
+  // Menu print out
   cout << "\nWelcome to Ethan's Chess game" << endl;
   cout << "\n1) Load game" << endl;
   cout << "\n2) Start new game" << endl;
@@ -1100,6 +1115,7 @@ int menu(){
   cout << "\n4) Exit" << endl;
 
   do{
+    // Error trapping the choice
     cout << "\nMake your choice (1-4): ";
     cin >> choice;
     if (choice < 1 || choice > 4){
@@ -1114,33 +1130,49 @@ bool castleLong(
   Piece* (&chessBoard)[boardSize][boardSize],
   char &currentPlayer
 ){
+  /**
+   * @brief Handles logic for castling Queen Side
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   * @params: currentPlayer - char the keeps track of the current player
+   * @returns a boolean that is true when the castling has been conducted, and the move is valid
+   */
   if (currentPlayer == 'w'){
-    Piece* king = chessBoard[0][4];
-    Piece* rook = chessBoard[0][0];
+    // If player is white
+    Piece* king = chessBoard[0][4]; // Store the white king in a variable
+    Piece* rook = chessBoard[0][0]; // Store the white rook in a variable
     if (
       king->player == 'w' && 
       rook->player == 'w' && 
       king->toString()[1] == 'K' 
       && rook->toString()[1] == 'R'
     ){
+      // Makes sure that the pieces are white and are kings and rooks
       if (
         chessBoard[0][1]->player == 'e' && 
         chessBoard[0][2]->player == 'e' &&
         chessBoard[0][3]->player == 'e'
       ){
+        // Checks if the squares in between are empty
         if (chessBoard[0][0]->numOfMoves == 0 && 
             chessBoard[0][4]->numOfMoves == 0
         ){
-          rook->file = 'd';
+          // If the rook and king have not been moved yet
+
+          // Conduct the moving logic
+          // Change the files to new files
+          rook->file = 'd'; 
           king->file = 'c';
 
+          // Set their old positions to empty squares
           chessBoard[0][0] = new Piece('a', 1, 'e');
           chessBoard[0][4] = new Piece('e', 1, 'e');
-
+          
+          // Place king and rook on new position
           chessBoard[0][2] = king;
           chessBoard[0][3] = rook;
 
           if (isUnderCheck(chessBoard, currentPlayer)){
+            // If the castling creates a check, the move is invalid, and move the pieces back
             rook->file = 'a';
             king->file = 'e';
 
@@ -1153,6 +1185,7 @@ bool castleLong(
 
             return false;
           } else {
+            // If move is successful, increment the numOfMoves variable
             chessBoard[0][2]->numOfMoves++;
             chessBoard[0][3]->numOfMoves++;
 
@@ -1162,6 +1195,7 @@ bool castleLong(
       }
     }
   } else if (currentPlayer == 'b'){
+    // Literally same logic as above, I kinda hardcoded this
     Piece* king = chessBoard[7][4];
     Piece* rook = chessBoard[7][0];
     if (
@@ -1216,6 +1250,12 @@ bool castleShort(
   Piece* (&chessBoard)[boardSize][boardSize],
   char &currentPlayer
 ){
+  /**
+   * @brief Handles logic for castling short side, literally same logic as castling long, except checks for the other direction
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   * @params: currentPlayer - char the keeps track of the current player
+   * @returns a boolean that is true when the castling has been conducted, and the move is valid
+   */
   if (currentPlayer == 'w'){
     Piece* king = chessBoard[0][4];
     Piece* rook = chessBoard[0][7];
@@ -1324,39 +1364,62 @@ bool movePiece(
   Piece* (&chessBoard)[boardSize][boardSize],
   char &currentPlayer
 ){
-  string fromSquare, toSquare;
+  /**
+   * @brief Handles the logic for 
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   * @params: currentPlayer - char the keeps track of the current player
+   * @returns a boolean that is true when the piece has been successfully moved
+   */
 
+  string fromSquare, toSquare; // Strings that stores the input tokens
+
+  // Prompting
   cout << "\nEnter the piece you want to move and where to move it to: ";
-  cin >> fromSquare; // d2
-  cin >> toSquare; // d4
+  cin >> fromSquare;
+  cin >> toSquare;
 
   if (fromSquare != lowerString("castle")){
-    int fromR = fromSquare[1] - '0';
+    // If I'm not castling (aka making a normal move)
+
+    // Convert the ranks from char to int
+    int fromR = fromSquare[1] - '0'; 
     int toR = toSquare[1] - '0';
 
-    cout << "From indices " << Piece::rankToIndex(fromR) << Piece::fileToIndex(tolower(fromSquare[0])) << endl;
-
+    // Store the moving piece and whatever is at the destination
     Piece* movingPiece = chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(tolower(fromSquare[0]))];
 
     Piece* destination = chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(tolower(toSquare[0]))];
 
     if (movingPiece->player == currentPlayer){
+      // Checks if the moving piece is the piece of the current player
       if (movingPiece->isMoveValid(tolower(toSquare[0]), toR, chessBoard)){
-        movingPiece->file = tolower(toSquare[0]);
+        // If the player is moving it to a valid square
+
+        // Change the attributes on the moving piece to the new square
+        movingPiece->file = tolower(toSquare[0]); // Not case sensitive
         movingPiece->rank = toR;
-        chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(tolower(toSquare[0]))] = movingPiece;
-
-        chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(tolower(fromSquare[0]))] = new Piece(tolower(fromSquare[0]), fromR, 'e'); 
-
-        if (movingPiece->toString()[1] == 'P'){
+        
+        if (movingPiece->isEnpassant(tolower(toSquare[0]), toR, chessBoard)){
+          // Doesn't quite work rn, will update later
+          // If the current piece is doing an en-passant
           if (movingPiece->player == 'w'){
-            chessBoard[Piece::rankToIndex(toR) - 1][Piece::fileToIndex(tolower(toSquare[0]))] = new Piece(tolower(fromSquare[0]), fromR - 1, 'e');
+            // If it's white, write the piece a rank under where its going empty
+            chessBoard[Piece::rankToIndex(toR) - 1][Piece::fileToIndex(tolower(toSquare[0]))] = new Piece(tolower(toSquare[0]), fromR - 1, 'e');
           } else if (movingPiece->player == 'b'){
-            chessBoard[Piece::rankToIndex(toR) + 1][Piece::fileToIndex(tolower(toSquare[0]))] = new Piece(tolower(fromSquare[0]), fromR + 1, 'e');
+            // If it's black, write the piece a rank above where its going empty
+            chessBoard[Piece::rankToIndex(toR) + 1][Piece::fileToIndex(tolower(toSquare[0]))] = new Piece(tolower(toSquare[0]), fromR + 1, 'e');
           }
         }
 
+        // Move the piece to the new square
+        chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(tolower(toSquare[0]))] = movingPiece;
+
+        // Make the old square into an empty space
+        chessBoard[Piece::rankToIndex(fromR)][Piece::fileToIndex(tolower(fromSquare[0]))] = new Piece(tolower(fromSquare[0]), fromR, 'e'); 
+
+
         if (isUnderCheck(chessBoard, currentPlayer)){
+          // If move causes a check, move the pieces back
           movingPiece->file = tolower(fromSquare[0]);
           movingPiece->rank = fromR;
           chessBoard[Piece::rankToIndex(toR)][Piece::fileToIndex(tolower(toSquare[0]))] = destination;
@@ -1364,6 +1427,7 @@ bool movePiece(
 
           return false;
         } else {
+          // If move is completely valid, then increment the amount of moves made attribute
           movingPiece->numOfMoves++;
         }
       } else {
@@ -1374,10 +1438,13 @@ bool movePiece(
     }
   } else {
     if (toSquare == lowerString("long")){
+      // If user castles long
       return castleLong(chessBoard, currentPlayer);
     } else if (toSquare == lowerString("short")){
+      // If user casles short
       return castleShort(chessBoard, currentPlayer);
     } else {
+      // Otherwise, return false
       return false;
     }
   }
@@ -1389,31 +1456,48 @@ bool isCheckmate(
   Piece* chessBoard[boardSize][boardSize],
   char currentPlayer
 ){
-  char opponentPlayer = currentPlayer == 'w' ? 'b' : 'w';
+  /**
+   * @brief Checks if the opponent player is checkmated
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   * @params: currentPlayer - char the keeps track of the current player
+   * @returns a boolean that is true when the opponent is checkmated
+   */
+
+  char opponentPlayer = currentPlayer == 'w' ? 'b' : 'w'; // Find the opponent player
 
   if (isUnderCheck(chessBoard, opponentPlayer)){
+    // If the opponent is under check
     for (int r = 0; r < boardSize; r++){
       for (int f = 0; f < boardSize; f++){
-        Piece* currentPiece = chessBoard[r][f];
-        cout << "CURRENT MOVING PIECE FOR TESTING CHECKMATE" << currentPiece->toString() << r << f << endl;
+        // Loop through the entire board
+        Piece* currentPiece = chessBoard[r][f]; // Pick up a piece
         if (currentPiece->player == opponentPlayer){
+          // If the piece belongs to opponent player
           for (int toR = 0; toR < boardSize; toR++){
             for (int toF = 0; toF < boardSize; toF++){
-              Piece* targetPiece = chessBoard[toR][toF];
+              // Loop through every single square
+              Piece* targetPiece = chessBoard[toR][toF]; // Pick up a target piece
               if (currentPiece->isMoveValid(toF + 97, toR + 1, chessBoard)){
+                // If the move is valid
+
+                // Move the piece there
                 currentPiece->file = toF + 97;
                 currentPiece->rank = toR + 1;
 
                 chessBoard[toR][toF] = currentPiece;
                 chessBoard[r][f] = new Piece(f + 97, r + 1, 'e');
+
+                // Now check if the opponent is still under check
                 bool checkStatus = isUnderCheck(chessBoard, opponentPlayer);
                 
+                // Move the pieces back
                 currentPiece->file = f + 97;
                 currentPiece->rank = r + 1;
                 chessBoard[r][f] = currentPiece;
                 chessBoard[toR][toF] = targetPiece;
 
                 if (!checkStatus){
+                  // If there's a move that can get rid of a check, it's not checkmate, otherwise, it is
                   return false;
                 }
               }
@@ -1433,33 +1517,46 @@ void readFen(
   Piece* (&chessBoard)[boardSize][boardSize],
   char &currentPlayer
 ){
-  ifstream gameFens ("Fens.txt");
-  string boardLayout;
+  /**
+   * @brief Reads the current position from FEN notation
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   * @params: currentPlayer - char the keeps track of the current player
+   */
+
+  ifstream gameFens ("Fens.txt"); // Open the text file
+  string boardLayout; // string that keeps track of the layout
 
   if (gameFens.is_open()){
-    gameFens >> boardLayout;
-    gameFens >> currentPlayer;
+    gameFens >> boardLayout; // The first string is the layout
+    gameFens >> currentPlayer; // Second string is the current player
 
-    char player;
+    char player; // Keeps track of the player
 
     for (int i = 0, r = 7, f = 0; i < boardLayout.length(); i++){
+      // Looping through the first string
       if (boardLayout[i] == '/'){
-        r--;
-        f = 0;
+        // If the current char is a '/', it means it's at a new rank
+        r--; // Drop the rank index by 1
+        f = 0; // Reset the file index to 0
       } else if (isdigit(boardLayout[i])){
+        // If it's a number
         for (int j = f; j < f + (boardLayout[i] - '0'); j++){
+          // Initialize some new empty spaces
           chessBoard[r][j] = new Piece(j + 97, r + 1, 'e');
         }
 
-        f += (boardLayout[i] - '0');
+        f += (boardLayout[i] - '0'); // Increase the file index by the number
       } else {
         if (isupper(boardLayout[i])){
+          // If the char is uppercase, player is white
           player = 'w';
         } else {
+          // Otherwise, it's black
           player = 'b';
         }
 
         switch(toupper(boardLayout[i])){
+          // Switch that sets the current position on the board to the according piece and player
           case 'P':
             chessBoard[r][f] = new Pawn(f + 97, r + 1, player);
             break;
@@ -1480,7 +1577,7 @@ void readFen(
             break;
         }
 
-        f++;
+        f++; // Increment the file
       }
 
     }
@@ -1492,6 +1589,10 @@ void readFen(
 }
 
 void initializeBoard(Piece* (&chessBoard)[boardSize][boardSize]){
+  /**
+   * @brief Saves the current position in FEN notation
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   */
   // Initializes the board
 
   // Puts the white pieces where they go
@@ -1541,6 +1642,7 @@ void printRules(){
 
   cout << "RULES OF ETHAN'S CHESS" << endl;
   cout << "\n1. When moving a piece, type in the square of the piece, then type in the square of where it should go to" << endl;
+  cout << "\n2. To Castle, type in 'castle short' to castle short, and 'castle long' to castle long" << endl;
   cout << "\n2. Win by checkmate" << endl;
   cout << "\n3. There's no promotions (I'm a bad programmer)" << endl;
 
@@ -1553,6 +1655,11 @@ bool menuSwitch(
   Piece* (&chessBoard)[boardSize][boardSize],
   char &currentPlayer
 ){
+  /**
+   * @brief Saves the current position in FEN notation
+   * @params: chessBoard - 2d pointer array of pieces that stores the current position of the board 
+   * @params: currentPlayer - char the keeps track of the current player
+   */
   // system("CLS"); // For Windows
   system("clear"); // For linux
   
